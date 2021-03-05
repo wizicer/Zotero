@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -47,8 +48,12 @@ namespace Zotero
     public class UserLibrary : Library { }
     public class GroupLibrary : Library { }
 
-    public class Collection : Container { }
-    
+    [DebuggerDisplay("{Name, nq}")]
+    public class Collection : Container {
+        public string Name { get; set; }
+        public string Key { get; set; }
+    }
+
     public abstract class Item : ZoteroObject
     {
         public readonly ObservableCollection<Creator> Creators = new ObservableCollection<Creator>();
@@ -60,6 +65,17 @@ namespace Zotero
             set
             {
                 this.title = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private string key;
+        public string Key
+        {
+            get { return this.key; }
+            set
+            {
+                this.key = value;
                 OnPropertyChanged();
             }
         }
@@ -153,6 +169,7 @@ namespace Zotero
         }
 
         public readonly ObservableCollection<Tag> Tags = new ObservableCollection<Tag>();
+        public readonly ObservableCollection<Attachment> Attachments = new ObservableCollection<Attachment>();
     }
 
     public class ZoteroFieldAttribute : Attribute

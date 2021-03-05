@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace Zotero
@@ -103,6 +104,7 @@ namespace Zotero
         }
     }
 
+    [DebuggerDisplay("{Title, nq}")]
     public class Book : Item
     {
         private string edition;

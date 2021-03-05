@@ -18,4 +18,11 @@ namespace Zotero
             }
         }
     }
+
+    public class Attachment 
+    {
+        public string Id { get; set; }
+        public string Key { get; set; }
+        public string Path { get; set; }
+    }
 }
