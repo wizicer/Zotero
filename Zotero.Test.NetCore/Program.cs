@@ -64,7 +64,11 @@ namespace Zotero.Test.NetCore
 
                 sb.AppendLine($"{new string('#', levels.Length)} {paper.Title}");
                 sb.AppendLine();
-                sb.AppendLine($"> Author: {string.Join(", ", paper.Creators.Select(_ => $"{_.FirstName} {_.LastName}"))}");
+                sb.AppendLine($"> {string.Join(", ", paper.Creators.Select(_ => $"{_.FirstName} {_.LastName}"))}" +
+                    $" ({string.Join(", ", new[] { paper.Publisher, paper.Date.ToShortDateString() }.Where(_ => !string.IsNullOrWhiteSpace(_)))})" +
+                    (paper.URL == null ? "" : $" [URL]({paper.URL})") +
+                    (paper.Attachments.Count == 0 ? "" : $" 📄") +
+                    $"");
                 sb.AppendLine();
                 sb.AppendLine($"> Abstract: {paper.AbstractNote}");
                 sb.AppendLine();

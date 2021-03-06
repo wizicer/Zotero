@@ -158,6 +158,10 @@ namespace Zotero.Connections
                             }
                             else if (field.PropertyType == typeof(string))
                                 field.SetValue(item, getValue.Data[0][VALUE_KEY].ToString());
+                            else if (field.PropertyType == typeof(Uri))
+                                field.SetValue(item, new Uri(getValue.Data[0][VALUE_KEY].ToString()));
+                            else
+                                System.Diagnostics.Debugger.Break();
                             //} catch (Exception ex) { }
                         }
 

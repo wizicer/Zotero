@@ -37,7 +37,7 @@ namespace Zotero
         public string Title { get; init; }
         public string Key { get; init; }
         public DateTime Date { get; init; }
-        public CultureInfo Language { get; init; }
+        public string Language { get; init; }
         public string AbstractNote { get; init; }
         public string ShortTitle { get; init; }
         public DateTime AccessDate { get; init; }
