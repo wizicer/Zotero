@@ -17,9 +17,14 @@ namespace Zotero.Test.NetCore
             ZoteroDatabaseConnection connection = new ZoteroDatabaseConnection(DEFAULT_ZOTERO_SQLITE_STORAGE_PATH);
             connection.Connect();
             Library[] libraries = connection.Dump();
+            var lib = libraries[0];
+            //CopyAttachments(lib);
+        }
+
+        static void CopyAttachments(Library lib)
+        {
             var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\";
             var srcBasePath = Path.Combine(Path.GetDirectoryName(DEFAULT_ZOTERO_SQLITE_STORAGE_PATH), "storage");
-            var lib = libraries[0];
             RecursiveSave(lib.InnerObjects, BASE_PATH);
 
             void RecursiveSave(ObservableCollection<ZoteroObject> objs, string path)
