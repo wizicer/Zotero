@@ -80,7 +80,7 @@ namespace Zotero.Connections
             string getTagsQuery = String.Format("SELECT * FROM {0}", TAGS_TABLE_NAME);
             SQLiteCommandResult getTags = this.databaseConnection.CreateCommand(getTagsQuery).ExecuteDeferredQuery();
             foreach (SQLiteDataTableRow tagRow in getTags.Data)
-                tags.Add(new Tag(tagRow[TAG_ID_KEY].ToString()));
+                tags.Add(new Tag(tagRow[TAG_ID_KEY].ToString(), tagRow[TAG_NAME_KEY].ToString()));
 
             SQLiteCommandResult getLibrariesResult = this.databaseConnection.CreateCommand("SELECT * FROM " + LIBRARIES_TABLE_NAME).ExecuteDeferredQuery();
             foreach (SQLiteDataTableRow libraryRow in getLibrariesResult.Data)
@@ -115,8 +115,10 @@ namespace Zotero.Connections
                         SQLiteCommandResult getItem = this.databaseConnection.CreateCommand(getItemQuery).ExecuteDeferredQuery();
 
                         //Parse type and create the new object
-                        Item item = new Book();
-                        item.Key = getItem.Data[0]["key"].ToString();
+                        Item item = new Book
+                        {
+                            Key = getItem.Data[0]["key"].ToString()
+                        };
                         string itemID = innerItemRow[ITEM_ID_KEY].ToString();
                         //TODO = (Item)Activator.CreateInstance();
 
@@ -165,7 +167,7 @@ namespace Zotero.Connections
                         foreach (SQLiteDataTableRow authorReference in getAuthorReference.Data)
                         {
                             try { item.Creators.Add(creators.First(creator => creator.ID == authorReference[CREATOR_ID_KEY].ToString())); }
-                            catch (InvalidOperationException) { }
+                            catch (InvalidOperationException ioex) { }
                         }
 
                         //Add tag references
@@ -174,7 +176,7 @@ namespace Zotero.Connections
                         foreach (SQLiteDataTableRow tagReference in getTagReferences.Data)
                         {
                             try { item.Tags.Add(tags.First(tag => tag.ID == tagReference[TAG_ID_KEY].ToString())); }
-                            catch (InvalidOperationException) { }
+                            catch (InvalidOperationException ioex) { }
                         }
 
                         //Add attachments
@@ -222,13 +224,9 @@ namespace Zotero.Connections
                 result.Add(library);
             }
 
-            //Restore tags name
-            foreach (SQLiteDataTableRow tagRow in getTags.Data)
-                tags.First(tag => tag.Name == tagRow[TAG_ID_KEY].ToString()).Name = tagRow[TAG_NAME_KEY].ToString();
-
             //Restore creators ID
-            foreach (Creator creator in creators)
-                creator.ID = creator.FirstName + ' ' + creator.LastName;
+            //foreach (Creator creator in creators)
+            //    creator.ID = creator.FirstName + ' ' + creator.LastName;
 
             return result.ToArray();
 

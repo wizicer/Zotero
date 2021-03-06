@@ -40,52 +40,15 @@ namespace Zotero
     }
     public class Creator : ZoteroObject
     {
-        public Creator(CreatorType creatorType, string firstName, string lastName) { this.firstName = firstName; this.lastName = lastName; }
-        private CreatorType type;
-        public CreatorType Type
+        public Creator(CreatorType type, string firstName, string lastName)
         {
-            get { return this.type; }
-            set
-            {
-                this.type = value;
-                OnPropertyChanged();
-            }
-        }
-        private string firstName = "";
-        public string FirstName
-        {
-            get { return this.firstName; }
-            set
-            {
-                this.firstName = value;
-                OnPropertyChanged();
-            }
-        }
-        private string lastName = "";
-        public string LastName
-        {
-            get { return this.lastName; }
-            set
-            {
-                this.lastName = value;
-                OnPropertyChanged();
-            }
+            this.Type = type;
+            this.FirstName = firstName;
+            this.LastName = lastName;
         }
 
-        /// <summary>
-        /// Fired when a property is modified in this class
-        /// </summary>
-        /// <remarks>Do not only work with "magic", you need to call "OnPropertyChanged()" method in inner properties "set" methods.</remarks>
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        /// <summary>
-        /// Fire "PropertyChanged" event with automatic property name completion when called from properties "set" methods
-        /// </summary>
-        /// <param name="propertyName">Modified property name</param>
-        public void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            if (PropertyChanged != null)
-                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        public CreatorType Type { get; init; }
+        public string FirstName { get; init; }
+        public string LastName { get; init; }
     }
 }
