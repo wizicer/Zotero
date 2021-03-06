@@ -23,7 +23,7 @@ namespace Zotero.Test.NetCore
 
         static void CopyAttachments(Library lib)
         {
-            var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\";
+            var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\storage";
             var srcBasePath = Path.Combine(Path.GetDirectoryName(DEFAULT_ZOTERO_SQLITE_STORAGE_PATH), "storage");
             RecursiveSave(lib.InnerObjects, BASE_PATH);
 
@@ -31,22 +31,29 @@ namespace Zotero.Test.NetCore
             {
                 foreach (var obj in objs)
                 {
-                    if (obj is Collection col)
+                    switch (obj)
                     {
-                        RecursiveSave(col.InnerObjects, Path.Combine(path, col.Name));
-                    }
-                    else if (obj is Book paper)
-                    {
-                        var att = paper.Attachments.FirstOrDefault();
-                        if (att == null) continue;
-                        var filename = att.Path.StartsWith("storage:") ? att.Path.Substring("storage:".Length) : throw new NotImplementedException();
-                        var src = Path.Combine(srcBasePath, att.Key, filename);
-                        if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-                        var filepath = Path.Combine(path, filename);
-                        File.Copy(src, filepath);
+                        case Collection col:
+                            RecursiveSave(col.InnerObjects, Path.Combine(path, col.Name));
+                            break;
+                        case Book paper:
+                            SavePaper(paper, path);
+                            break;
                     }
                 }
             }
+
+            void SavePaper(Book paper, string path)
+            {
+                var att = paper.Attachments.FirstOrDefault();
+                if (att == null) return;
+                var filename = att.Path.StartsWith("storage:") ? att.Path.Substring("storage:".Length) : throw new NotImplementedException();
+                var src = Path.Combine(srcBasePath, att.Key, filename);
+                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+                var filepath = Path.Combine(path, filename);
+                if (!File.Exists(filepath)) File.Copy(src, filepath);
+            }
+
         }
     }
 }
