@@ -20,7 +20,7 @@ namespace Zotero.Test.NetCore
             Library[] libraries = connection.Dump();
             var lib = libraries[0];
             GenerateMarkdown(lib);
-            //CopyAttachments(lib);
+            CopyAttachments(lib);
         }
 
         record MarkdownFile(string Title)
@@ -47,7 +47,12 @@ namespace Zotero.Test.NetCore
                     switch (obj)
                     {
                         case Collection col:
-                            RecursiveSave(col.InnerObjects, levels.Concat(new[] { col.Name }).ToArray());
+                            var nlevels = levels.Concat(new[] { col.Name }).ToArray();
+                            var filename = nlevels[0] + ".md";
+                            if (!mds.ContainsKey(filename)) mds[filename] = new StringBuilder();
+                            var sb = mds[filename];
+                            sb.AppendLine($"{new string('#', nlevels.Length)} {col.Name}");
+                            RecursiveSave(col.InnerObjects, nlevels);
                             break;
                         case Book paper:
                             SavePaper(paper, levels);
@@ -59,13 +64,12 @@ namespace Zotero.Test.NetCore
             void SavePaper(Book paper, string[] levels)
             {
                 var filename = levels[0] + ".md";
-                if (!mds.ContainsKey(filename)) mds[filename] = new StringBuilder();
                 var sb = mds[filename];
 
-                sb.AppendLine($"{new string('#', levels.Length)} {paper.Title}");
+                sb.AppendLine($"{new string('#', levels.Length + 1)} {paper.Title}");
                 sb.AppendLine();
                 sb.AppendLine($"> {string.Join(", ", paper.Creators.Select(_ => $"{_.FirstName} {_.LastName}"))}" +
-                    $" ({string.Join(", ", new[] { paper.Publisher, paper.Date.ToShortDateString() }.Where(_ => !string.IsNullOrWhiteSpace(_)))})" +
+                    $" ({string.Join(", ", new[] { paper.Publisher, paper.Date }.Where(_ => !string.IsNullOrWhiteSpace(_)))})" +
                     (paper.URL == null ? "" : $" [URL]({paper.URL})") +
                     (paper.Attachments.Count == 0 ? "" : $" 📄") +
                     $"");
