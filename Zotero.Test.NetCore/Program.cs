@@ -52,6 +52,7 @@ namespace Zotero.Test.NetCore
                             if (!mds.ContainsKey(filename)) mds[filename] = new StringBuilder();
                             var sb = mds[filename];
                             sb.AppendLine($"{new string('#', nlevels.Length)} {col.Name}");
+                            sb.AppendLine();
                             RecursiveSave(col.InnerObjects, nlevels);
                             break;
                         case Book paper:
@@ -69,7 +70,7 @@ namespace Zotero.Test.NetCore
                 sb.AppendLine($"{new string('#', levels.Length + 1)} {paper.Title}");
                 sb.AppendLine();
                 sb.AppendLine($"> {string.Join(", ", paper.Creators.Select(_ => $"{_.FirstName} {_.LastName}"))}" +
-                    $" ({string.Join(", ", new[] { paper.Publisher, paper.Date }.Where(_ => !string.IsNullOrWhiteSpace(_)))})" +
+                    $" ({string.Join(", ", new[] { paper.Publisher, paper.Date, paper.Type }.Where(_ => !string.IsNullOrWhiteSpace(_)))})" +
                     (paper.URL == null ? "" : $" [URL]({paper.URL})") +
                     (paper.Attachments.Count == 0 ? "" : $" 📄") +
                     $"");

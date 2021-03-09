@@ -34,6 +34,7 @@ namespace Zotero
     {
         public readonly ObservableCollection<Creator> Creators = new ObservableCollection<Creator>();
 
+        public string Type { get; init; }
         public string Title { get; init; }
         public string Key { get; init; }
         public string Date { get; init; }

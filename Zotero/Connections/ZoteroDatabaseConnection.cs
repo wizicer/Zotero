@@ -82,6 +82,13 @@ namespace Zotero.Connections
             foreach (SQLiteDataTableRow tagRow in getTags.Data)
                 tags.Add(new Tag(tagRow[TAG_ID_KEY].ToString(), tagRow[TAG_NAME_KEY].ToString()));
 
+            //Import item types
+            var types = new Dictionary<int, string>();
+            string getTypesQuery = $"SELECT * FROM {"itemTypes"}";
+            SQLiteCommandResult getTypes = this.databaseConnection.CreateCommand(getTypesQuery).ExecuteDeferredQuery();
+            foreach (SQLiteDataTableRow typeRow in getTypes.Data)
+                types.Add(int.Parse(typeRow["itemTypeID"].ToString()), typeRow["typeName"].ToString());
+
             SQLiteCommandResult getLibrariesResult = this.databaseConnection.CreateCommand("SELECT * FROM " + LIBRARIES_TABLE_NAME).ExecuteDeferredQuery();
             foreach (SQLiteDataTableRow libraryRow in getLibrariesResult.Data)
             {
@@ -117,7 +124,8 @@ namespace Zotero.Connections
                         //Parse type and create the new object
                         Item item = new Book
                         {
-                            Key = getItem.Data[0]["key"].ToString()
+                            Key = getItem.Data[0]["key"].ToString(),
+                            Type = types[int.Parse(getItem.Data[0]["itemTypeID"].ToString())],
                         };
                         string itemID = innerItemRow[ITEM_ID_KEY].ToString();
                         //TODO = (Item)Activator.CreateInstance();
