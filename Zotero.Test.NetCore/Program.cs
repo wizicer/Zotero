@@ -19,6 +19,7 @@ namespace Zotero.Test.NetCore
             connection.Connect();
             Library[] libraries = connection.Dump();
             var lib = libraries[0];
+            GenerateMarkdownList(lib);
             GenerateMarkdown(lib);
             CopyAttachments(lib);
         }
@@ -26,6 +27,43 @@ namespace Zotero.Test.NetCore
         record MarkdownFile(string Title)
         {
             public StringBuilder Content { get; init; }
+        }
+
+        static void GenerateMarkdownList(Library lib)
+        {
+            var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\notes";
+            if (!Directory.Exists(BASE_PATH)) Directory.CreateDirectory(BASE_PATH);
+            var sb = new StringBuilder();
+            RecursiveSave(lib.InnerObjects);
+
+            File.WriteAllText(Path.Combine(BASE_PATH, "List.md"), sb.ToString());
+
+            void RecursiveSave(ObservableCollection<ZoteroObject> objs, params string[] levels)
+            {
+                foreach (var obj in objs)
+                {
+                    switch (obj)
+                    {
+                        case Collection col:
+                            sb.AppendLine($"{new string(' ', levels.Length * 4)}- {col.Name}");
+                            sb.AppendLine();
+                            var nlevels = levels.Concat(new[] { col.Name }).ToArray();
+                            RecursiveSave(col.InnerObjects, nlevels);
+                            break;
+                        case Book paper:
+                            SavePaper(paper, levels);
+                            break;
+                    }
+                }
+            }
+
+            void SavePaper(Book paper, string[] levels)
+            {
+                sb.AppendLine($"{new string(' ', levels.Length * 4)}- {paper.Title}"
+                    + (paper.Attachments.Count == 0 ? "" : $" 📄")
+                    );
+                sb.AppendLine();
+            }
         }
 
         static void GenerateMarkdown(Library lib)
