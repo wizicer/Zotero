@@ -16,6 +16,7 @@ namespace Zotero
 
     public abstract class Container : ZoteroObject
     {
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
         public ObservableCollection<ZoteroObject> InnerObjects = new ObservableCollection<ZoteroObject>(); //TODO: Change to prevent storage of libraries
     }
 
@@ -48,6 +49,7 @@ namespace Zotero
 
         public readonly ObservableCollection<Tag> Tags = new ObservableCollection<Tag>();
         public readonly ObservableCollection<Attachment> Attachments = new ObservableCollection<Attachment>();
+        public ObservableCollection<KeyValuePair<string, string>> Fields { get; init; } = new();
     }
 
     public class ZoteroFieldAttribute : Attribute

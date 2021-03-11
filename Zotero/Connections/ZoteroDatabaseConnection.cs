@@ -118,40 +118,37 @@ namespace Zotero.Connections
                     SQLiteCommandResult getInnerItems = this.databaseConnection.CreateCommand(getInnerItemsQuery).ExecuteDeferredQuery();
                     foreach (SQLiteDataTableRow innerItemRow in getInnerItems.Data)
                     {
-                        string getItemQuery = String.Format("SELECT * FROM {0} WHERE {1} IS {2}", ITEMS_TABLE_NAME, ITEM_ID_KEY, innerItemRow[ITEM_ID_KEY]);
+                        string itemID = innerItemRow[ITEM_ID_KEY].ToString();
+                        string getItemQuery = String.Format("SELECT * FROM {0} WHERE {1} IS {2}", ITEMS_TABLE_NAME, ITEM_ID_KEY, itemID);
                         SQLiteCommandResult getItem = this.databaseConnection.CreateCommand(getItemQuery).ExecuteDeferredQuery();
+
+                        var getFields = Execute($@"select fieldName,value from itemDataValues idv
+  join itemData id on id.valueID = idv.valueID
+  join fields f on f.fieldID = id.fieldID
+where itemID is {itemID}");
+                        var fields = getFields.Data
+                            .ToDictionary(_ => _["fieldName"].ToString(), _ => _["value"].ToString());
 
                         //Parse type and create the new object
                         Item item = new Book
                         {
                             Key = getItem.Data[0]["key"].ToString(),
                             Type = types[int.Parse(getItem.Data[0]["itemTypeID"].ToString())],
+                            Fields = new System.Collections.ObjectModel.ObservableCollection<KeyValuePair<string, string>>(fields),
                         };
-                        string itemID = innerItemRow[ITEM_ID_KEY].ToString();
                         //TODO = (Item)Activator.CreateInstance();
+                        fields = fields.ToDictionary(_ => _.Key.ToLower(), _ => _.Value);
 
                         //Fill it with corresponding data
                         foreach (PropertyInfo field in item.GetType().GetRuntimeProperties().Where(property => property.GetSetMethod().IsPublic))
                         {
-                            //try
-                            //{
-                            string getFieldIDQuery = String.Format("SELECT * FROM {0} WHERE {1} IS \'{2}\' COLLATE NOCASE", ITEMS_FIELDS_TABLE_NAME, ITEM_FIELD_NAME_KEY, field.Name);
-                            SQLiteCommandResult getFieldID = this.databaseConnection.CreateCommand(getFieldIDQuery).ExecuteDeferredQuery();
-
-                            if (getFieldID.Data.Count == 0) continue;
-
-                            string getValueIDQuery = String.Format("SELECT * FROM {0} WHERE {1} IS {2} AND {3} IS {4}", ITEMS_VALUE_ID_TABLE_NAME, ITEM_ID_KEY, innerItemRow[ITEM_ID_KEY], ITEM_FIELD_ID_KEY, getFieldID.Data[0][ITEM_FIELD_ID_KEY]);
-                            SQLiteCommandResult getValueID = this.databaseConnection.CreateCommand(getValueIDQuery).ExecuteDeferredQuery();
-
-                            if (getValueID.Data.Count == 0) continue;
-
-                            string getValueQuery = String.Format("SELECT * FROM {0} WHERE {1} IS {2}", ITEMS_VALUES_TABLE_NAME, VALUE_ID_KEY, getValueID.Data[0][VALUE_ID_KEY]);
-                            SQLiteCommandResult getValue = this.databaseConnection.CreateCommand(getValueQuery).ExecuteDeferredQuery();
+                            if (!fields.ContainsKey(field.Name.ToLower())) continue;
+                            var value = fields[field.Name.ToLower()];
 
                             if (field.PropertyType == typeof(DateTime))
                             {
                                 const string DATE_FORMAT = "yyyy-MM-dd";
-                                string rawDate = getValue.Data[0][VALUE_KEY].ToString().Substring(0, DATE_FORMAT.Length);
+                                string rawDate = value.Substring(0, DATE_FORMAT.Length);
                                 if (rawDate.EndsWith("00-00"))
                                 {
                                     rawDate = rawDate.Substring(0, 4) + "-01-01";
@@ -165,12 +162,11 @@ namespace Zotero.Connections
                                 field.SetValue(item, DateTime.ParseExact(rawDate, DATE_FORMAT, null));
                             }
                             else if (field.PropertyType == typeof(string))
-                                field.SetValue(item, getValue.Data[0][VALUE_KEY].ToString());
+                                field.SetValue(item, value);
                             else if (field.PropertyType == typeof(Uri))
-                                field.SetValue(item, new Uri(getValue.Data[0][VALUE_KEY].ToString()));
+                                field.SetValue(item, new Uri(value));
                             else
                                 System.Diagnostics.Debugger.Break();
-                            //} catch (Exception ex) { }
                         }
 
                         //Add author references
@@ -277,5 +273,8 @@ namespace Zotero.Connections
         {
             throw new NotImplementedException();
         }
+
+        private SQLiteCommandResult Execute(string sql)
+            => this.databaseConnection.CreateCommand(sql).ExecuteDeferredQuery();
     }
 }
