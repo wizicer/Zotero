@@ -122,36 +122,77 @@ namespace Zotero.Test.NetCore
         static void CopyAttachments(Library lib)
         {
             var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\storage";
+            var ARCHIVE_PATH = @"C:\Users\icer\OneDrive\Work\papers\archive";
+            if (!Directory.Exists(ARCHIVE_PATH)) Directory.CreateDirectory(ARCHIVE_PATH);
             var srcBasePath = Path.Combine(Path.GetDirectoryName(DEFAULT_ZOTERO_SQLITE_STORAGE_PATH), "storage");
-            RecursiveSave(lib.InnerObjects, BASE_PATH);
+            var copies = RecursiveSave(lib.InnerObjects).SelectMany(_ => _);
+            var existFiles = RecursiveFill(new DirectoryInfo(BASE_PATH))
+                .SelectMany(_ => _)
+                .ToArray();
 
-            void RecursiveSave(ObservableCollection<ZoteroObject> objs, string path)
+            // add or update (copy)
+            foreach (var copy in copies)
+            {
+                var src = Path.Combine(srcBasePath, copy.Source);
+                var tgt = Path.Combine(BASE_PATH, copy.Target);
+                var tgtDir = new FileInfo(tgt).Directory;
+                if (!tgtDir.Exists) tgtDir.Create();
+                if (!File.Exists(tgt)) File.Copy(src, tgt);
+            }
+
+            // remove (move)
+            foreach (var file in existFiles)
+            {
+                if (copies.All(_ => _.Target != file))
+                {
+                    var src = Path.Combine(BASE_PATH, file);
+                    var tgt = Path.Combine(ARCHIVE_PATH, file);
+                    var tgtDir = new FileInfo(tgt).Directory;
+                    if (!tgtDir.Exists) tgtDir.Create();
+                    if (!File.Exists(tgt)) File.Move(src, tgt);
+                }
+            }
+
+            IEnumerable<IEnumerable<string>> RecursiveFill(DirectoryInfo dir, string path = "")
+            {
+                foreach (var subdir in dir.EnumerateDirectories())
+                {
+                    yield return RecursiveFill(subdir, Path.Combine(path, subdir.Name)).SelectMany(_ => _);
+                }
+
+                yield return dir.EnumerateFiles("*", SearchOption.TopDirectoryOnly).Select(_ => Path.Combine(path, _.Name));
+            }
+
+            IEnumerable<IEnumerable<CopyInstructor>> RecursiveSave(ObservableCollection<ZoteroObject> objs, string path = "")
             {
                 foreach (var obj in objs)
                 {
                     switch (obj)
                     {
                         case Collection col:
-                            RecursiveSave(col.InnerObjects, Path.Combine(path, col.Name));
+                            yield return RecursiveSave(col.InnerObjects, Path.Combine(path, col.Name)).SelectMany(_ => _);
                             break;
                         case Book paper:
-                            SavePaper(paper, path);
+                            yield return SavePaper(paper, path);
                             break;
                     }
                 }
             }
 
-            void SavePaper(Book paper, string path)
+            IEnumerable<CopyInstructor> SavePaper(Book paper, string path)
             {
                 var att = paper.Attachments.FirstOrDefault();
-                if (att == null) return;
+                if (att == null) yield break;
                 var filename = att.Path.StartsWith("storage:") ? att.Path.Substring("storage:".Length) : throw new NotImplementedException();
-                var src = Path.Combine(srcBasePath, att.Key, filename);
-                if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-                var filepath = Path.Combine(path, filename);
-                if (!File.Exists(filepath)) File.Copy(src, filepath);
+                yield return new CopyInstructor(Path.Combine(att.Key, filename), Path.Combine(path, filename));
+                //var src = Path.Combine(srcBasePath, att.Key, filename);
+                //if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+                //var filepath = Path.Combine(path, filename);
+                //if (!File.Exists(filepath)) File.Copy(src, filepath);
             }
 
         }
+
+        public record CopyInstructor(string Source, string Target);
     }
 }
