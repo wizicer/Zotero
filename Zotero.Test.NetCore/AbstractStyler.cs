@@ -33,14 +33,14 @@ namespace Zotero.Test.NetCore
                 var lowWord = pureWord.ToLower();
                 if (IsNonLexicalWord(lowWord))
                 {
-                    wordList.Add($"<font color=\"#bbb\">{word}</font>");
+                    wordList.Add($"<font color=\"#ddd\">{word}</font>");
                 }
                 else
                 {
                     var style = wordStyle.FirstOrDefault(_ => _.word == lowWord);
                     if (style == null)
                     {
-                        wordList.Add($"<font color=\"#999\">{word}</font>");
+                        wordList.Add($"<font color=\"#aaa\">{word}</font>");
                     }
                     else
                     {
@@ -53,7 +53,8 @@ namespace Zotero.Test.NetCore
         }
         private static IEnumerable<Color> GetColors(int count)
         {
-            var baseColors = new[] { "44696C", "A35F0C", "B8254C", "7F233C", "120E0C", }
+            var baseColors = new[] { "36133D", "10293F", "2C6829", "8F7D19", "AB4822", }
+            //var baseColors = new[] { "44696C", "A35F0C", "B8254C", "7F233C", "120E0C", }
                 .Select(GetColorFromHex)
                 .ToArray();
             var targetColor = GetColorFromHex("999");
@@ -94,44 +95,7 @@ namespace Zotero.Test.NetCore
             }
         }
 
-        private static readonly string[] NonLexicalWords = new[]  {
-            "to",
-            "got",
-            "is",
-            "have",
-            "and",
-            "although",
-            "or",
-            "that",
-            "when",
-            "while",
-            "a",
-            "either",
-            "more",
-            "much",
-            "neither",
-            "my",
-            "that",
-            "the",
-            "as",
-            "no",
-            "nor",
-            "not",
-            "at",
-            "between",
-            "in",
-            "of",
-            "without",
-            "I",
-            "you",
-            "he",
-            "she",
-            "it",
-            "we",
-            "they",
-            "anybody",
-            "one",
-        };
+        private static readonly string[] NonLexicalWords = new[] { "the", "of", "and", "to", "a", "in", "for", "is", "on", "that", "by", "this", "with", "i", "you", "it", "not", "or", "be", "are", "from", "at", "as", "your", "all", "have", "new", "more", "an", "was", "we", "will", "home", "can", "us", "about", "if", "page", "my", "has", "search", "free", "but", "our", "one", "other", "do", "no", "information", "time", "they", "site", "he", "up", "may", "what", "which", "their", "news", "out", "use", "any", "there", "see", "only", "so", "his", "when", "contact", "here", "business", "who", "web", "also", "now", "help", "get", "pm", "view", "online", "c", "e", "first", "am", "been", "would", "how", "were", "me", "s", "services", "some", "these", "click", "its", "like", "service", "x", "than", "find", "price", "date", "back", "top", "people", "had", "list", "name", "just", "over", "state", "year", "day", "into", "email", "two", "health", "n", "world", "re", "next", "used", "go", "b", "work", "last", "most", "products", "music", "buy", "data", "make", "them", "should", "product", "system", "post", "her", "city", "t", "add", "policy", "number", "such", "please", "available", "copyright", "support", "message", "after", "best", "software", "then", "jan", "good", "video", "well", "d", "where", "info", "rights", "public", "books", "high", "school", "through", "m", "each", "links", "she", "review", "years", "order", "very", "privacy", "book", "items", "company", "r", "read", "group", "sex", "need", "many", "user", "said", "de", "does", "set", "under", "general", "research", "university", "january", "mail", "full", "map", "reviews", "program", "life" };
         private static bool IsLexicalWord(string word) => !IsNonLexicalWord(word);
         private static bool IsNonLexicalWord(string word) => NonLexicalWords.Contains(word);
     }
