@@ -45,6 +45,7 @@ namespace Zotero
         public string AccessDate { get; init; }
         public string Rights { get; init; }
         public string Extra { get; init; }
+        public string Doi { get; init; }
         public Uri URL { get; init; }
 
         public readonly ObservableCollection<Tag> Tags = new ObservableCollection<Tag>();
