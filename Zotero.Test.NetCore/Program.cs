@@ -113,7 +113,7 @@ namespace Zotero.Test.NetCore
                     (paper.Attachments.Count == 0 ? "" : $" 📄") +
                     $"");
                 sb.AppendLine();
-                sb.AppendLine($"> Abstract: {paper.AbstractNote}");
+                sb.AppendLine($"> Abstract: {AbstractStyler.StyleAbstract(paper.AbstractNote)}");
                 sb.AppendLine();
                 sb.AppendLine();
             }
