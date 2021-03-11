@@ -153,6 +153,20 @@ namespace Zotero.Test.NetCore
                 }
             }
 
+            // clean empty directory
+            RecursiveClean(new DirectoryInfo(BASE_PATH));
+
+            void RecursiveClean(DirectoryInfo dir)
+            {
+                foreach (var subdir in dir.EnumerateDirectories())
+                {
+                    RecursiveClean(subdir);
+                }
+
+                if (!dir.EnumerateFiles("*", SearchOption.AllDirectories).Any())
+                    dir.Delete();
+            }
+
             IEnumerable<IEnumerable<string>> RecursiveFill(DirectoryInfo dir, string path = "")
             {
                 foreach (var subdir in dir.EnumerateDirectories())
