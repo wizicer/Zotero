@@ -6,12 +6,32 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="github-markdown.css" />
+    <None Remove="main.css" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="main.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="github-markdown.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="SQLite.Native" Version="3.12.3" />
     <PackageReference Include="YamlDotNet" Version="9.1.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Zotero\Zotero.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="template.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

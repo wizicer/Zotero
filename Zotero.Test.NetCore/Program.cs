@@ -149,13 +149,28 @@ namespace Zotero.Test.NetCore
         {
             var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\notes";
             if (!Directory.Exists(BASE_PATH)) Directory.CreateDirectory(BASE_PATH);
+
+            void MakeSureFile(string filename)
+            {
+                var file = Path.Combine(BASE_PATH, filename);
+                File.Copy(filename, file, true);
+            }
+
+            foreach (var item in new[] { "github-markdown.css", "main.css" })
+            {
+                MakeSureFile(item);
+            }
+
             var dictNotes = notes.ToDictionary(_ => _.Key, _ => _);
             var mds = new Dictionary<string, StringBuilder>();
             RecursiveSave(lib.InnerObjects);
+            var template = File.ReadAllText("template.html");
 
             foreach (var md in mds)
             {
-                File.WriteAllText(Path.Combine(BASE_PATH, md.Key), md.Value.ToString());
+                File.WriteAllText(
+                    Path.Combine(BASE_PATH, md.Key + ".html"),
+                    template.Replace("{{CONTENT}}", md.Value.ToString()).Replace("{{TITLE}}", md.Key));
             }
 
             void RecursiveSave(ObservableCollection<ZoteroObject> objs, params string[] levels)
@@ -166,10 +181,10 @@ namespace Zotero.Test.NetCore
                     {
                         case Collection col:
                             var nlevels = levels.Concat(new[] { col.Name }).ToArray();
-                            var filename = nlevels[0] + ".md";
+                            var filename = nlevels[0];
                             if (!mds.ContainsKey(filename)) mds[filename] = new StringBuilder();
                             var sb = mds[filename];
-                            sb.AppendLine($"{new string('#', nlevels.Length)} {col.Name}");
+                            sb.AppendLine($"<h{nlevels.Length}>{col.Name}</h{nlevels.Length}>");
                             sb.AppendLine();
                             RecursiveSave(col.InnerObjects, nlevels);
                             break;
@@ -182,20 +197,19 @@ namespace Zotero.Test.NetCore
 
             void SavePaper(Book paper, string[] levels)
             {
-                var filename = levels[0] + ".md";
+                var filename = levels[0];
                 var sb = mds[filename];
                 var note = dictNotes[paper.Key];
 
-                sb.AppendLine($"{new string('#', levels.Length + 1)} {paper.Title}");
+                sb.AppendLine($"<h{levels.Length + 1}>{paper.Title}</h{levels.Length + 1}>");
                 sb.AppendLine();
-                sb.AppendLine($"> {string.Join(", ", paper.Creators.Select(_ => $"{_.FirstName} {_.LastName}"))}" +
+                sb.AppendLine($"<blockquote> {string.Join(", ", paper.Creators.Select(_ => $"{_.FirstName} {_.LastName}"))}" +
                     $" ({string.Join(", ", new[] { paper.Publisher, paper.Date, paper.Type }.Where(_ => !string.IsNullOrWhiteSpace(_)))})" +
-                    (paper.URL == null ? "" : $" [URL]({paper.URL})") +
+                    (paper.URL == null ? "" : $" <a href=\"{paper.URL}\">URL</a>)") +
                     (paper.Attachments.Count == 0 ? "" : $" 📄") +
-                    $"");
+                    $"</blockquote>");
                 sb.AppendLine();
-                sb.AppendLine($"> Abstract: {AbstractStyler.StyleAbstract(paper.AbstractNote, note.Highlights)}");
-                sb.AppendLine();
+                sb.AppendLine($"<p>Abstract: {AbstractStyler.StyleAbstract(paper.AbstractNote, note.Highlights)}</p>");
                 sb.AppendLine();
             }
         }
