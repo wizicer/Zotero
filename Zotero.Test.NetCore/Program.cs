@@ -21,9 +21,9 @@ namespace Zotero.Test.NetCore
             connection.Connect();
             Library[] libraries = connection.Dump();
             var lib = libraries[0];
+            var list = GenerateYamlNotes(lib);
             GenerateMarkdownList(lib);
-            GenerateMarkdown(lib);
-            GenerateYamlNotes(lib);
+            GenerateMarkdown(lib, list);
             CopyAttachments(lib);
         }
 
@@ -32,7 +32,7 @@ namespace Zotero.Test.NetCore
             public StringBuilder Content { get; init; }
         }
 
-        static void GenerateYamlNotes(Library lib)
+        static YamlEntity[] GenerateYamlNotes(Library lib)
         {
             var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\notes";
             if (!Directory.Exists(BASE_PATH)) Directory.CreateDirectory(BASE_PATH);
@@ -66,7 +66,7 @@ namespace Zotero.Test.NetCore
                 {
                     // update item info from old list
                     var pos = newList.IndexOf(newItem);
-                    newList[pos] = oldItem with { Title = oldItem.Title, Collection = oldItem.Collection };
+                    newList[pos] = oldItem with { Title = newItem.Title, Collection = newItem.Collection };
                 }
             }
 
@@ -75,6 +75,8 @@ namespace Zotero.Test.NetCore
                 .Build();
             File.WriteAllText(notesPath, serializer.Serialize(newList));
             File.WriteAllText(archivePath, serializer.Serialize(archiveList));
+
+            return newList.ToArray();
 
             void RecursiveGet(ObservableCollection<ZoteroObject> objs, params string[] levels)
             {
@@ -94,7 +96,15 @@ namespace Zotero.Test.NetCore
 
             void SavePaper(Book paper, string[] levels)
             {
-                newList.Add(new YamlEntity(paper.Key, string.Join(".", levels), paper.Title, new[] { "" }, string.Empty));
+                var pos = newList.FindIndex(_ => _.Key == paper.Key);
+                if (pos > -1)
+                {
+                    newList[pos] = newList[pos] with { Collection = newList[pos].Collection + " | " + string.Join(".", levels) };
+                }
+                else
+                {
+                    newList.Add(new YamlEntity(paper.Key, string.Join(".", levels), paper.Title, new[] { "" }, string.Empty));
+                }
             }
         }
 
@@ -135,10 +145,11 @@ namespace Zotero.Test.NetCore
             }
         }
 
-        static void GenerateMarkdown(Library lib)
+        static void GenerateMarkdown(Library lib, YamlEntity[] notes)
         {
             var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\notes";
             if (!Directory.Exists(BASE_PATH)) Directory.CreateDirectory(BASE_PATH);
+            var dictNotes = notes.ToDictionary(_ => _.Key, _ => _);
             var mds = new Dictionary<string, StringBuilder>();
             RecursiveSave(lib.InnerObjects);
 
@@ -173,6 +184,7 @@ namespace Zotero.Test.NetCore
             {
                 var filename = levels[0] + ".md";
                 var sb = mds[filename];
+                var note = dictNotes[paper.Key];
 
                 sb.AppendLine($"{new string('#', levels.Length + 1)} {paper.Title}");
                 sb.AppendLine();
@@ -182,7 +194,7 @@ namespace Zotero.Test.NetCore
                     (paper.Attachments.Count == 0 ? "" : $" 📄") +
                     $"");
                 sb.AppendLine();
-                sb.AppendLine($"> Abstract: {AbstractStyler.StyleAbstract(paper.AbstractNote)}");
+                sb.AppendLine($"> Abstract: {AbstractStyler.StyleAbstract(paper.AbstractNote, note.Highlights)}");
                 sb.AppendLine();
                 sb.AppendLine();
             }
