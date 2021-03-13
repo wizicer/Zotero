@@ -31,20 +31,23 @@ namespace Zotero.Test.NetCore
             {
                 var pureWord = word.Trim(punctuation);//.ToLower();
                 var lowWord = pureWord.ToLower();
+                var resultWord = word;
+                if (resultWord.EndsWith(".")) resultWord = resultWord.Replace(".", ".&emsp;&emsp;&emsp;");
+
                 if (IsNonLexicalWord(lowWord))
                 {
-                    wordList.Add($"<font color=\"#ddd\">{word}</font>");
+                    wordList.Add($"<font color=\"#ddd\">{resultWord}</font>");
                 }
                 else
                 {
                     var style = wordStyle.FirstOrDefault(_ => _.word == lowWord);
                     if (style == null)
                     {
-                        wordList.Add($"<font color=\"#aaa\">{word}</font>");
+                        wordList.Add($"<font color=\"#aaa\">{resultWord}</font>");
                     }
                     else
                     {
-                        wordList.Add($"<font color=\"{style.color}\">{word}</font>");
+                        wordList.Add($"<font color=\"{style.color}\">{resultWord}</font>");
                     }
                 }
             }
