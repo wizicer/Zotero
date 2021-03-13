@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 using Zotero;
 using Zotero.Connections;
 
@@ -21,12 +23,79 @@ namespace Zotero.Test.NetCore
             var lib = libraries[0];
             GenerateMarkdownList(lib);
             GenerateMarkdown(lib);
+            GenerateYamlNotes(lib);
             CopyAttachments(lib);
         }
 
         record MarkdownFile(string Title)
         {
             public StringBuilder Content { get; init; }
+        }
+
+        static void GenerateYamlNotes(Library lib)
+        {
+            var BASE_PATH = @"C:\Users\icer\OneDrive\Work\papers\notes";
+            if (!Directory.Exists(BASE_PATH)) Directory.CreateDirectory(BASE_PATH);
+            var newList = new List<YamlEntity>();
+            RecursiveGet(lib.InnerObjects);
+            var notesPath = Path.Combine(BASE_PATH, "Notes.yml");
+            var archivePath = Path.Combine(BASE_PATH, "ArchiveNotes.yml");
+
+            var oldList = new List<YamlEntity>();
+            if (File.Exists(notesPath))
+            {
+                var deserializer = new DeserializerBuilder()
+                    .WithNamingConvention(UnderscoredNamingConvention.Instance)
+                    .Build();
+                var tl = deserializer.Deserialize<YamlEntity[]>(File.ReadAllText(notesPath));
+                if (tl != null) oldList.AddRange(tl);
+            }
+
+
+            var archiveList = new List<YamlEntity>();
+
+            foreach (var oldItem in oldList)
+            {
+                var newItem = newList.FirstOrDefault(_ => _.Key == oldItem.Key);
+                if (newItem == null)
+                {
+                    // legacy item to archive
+                    archiveList.Add(oldItem);
+                }
+                else
+                {
+                    // update item info from old list
+                    var pos = newList.IndexOf(newItem);
+                    newList[pos] = oldItem with { Title = oldItem.Title, Collection = oldItem.Collection };
+                }
+            }
+
+            var serializer = new SerializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .Build();
+            File.WriteAllText(notesPath, serializer.Serialize(newList));
+            File.WriteAllText(archivePath, serializer.Serialize(archiveList));
+
+            void RecursiveGet(ObservableCollection<ZoteroObject> objs, params string[] levels)
+            {
+                foreach (var obj in objs)
+                {
+                    switch (obj)
+                    {
+                        case Collection col:
+                            RecursiveGet(col.InnerObjects, levels.Concat(new[] { col.Name }).ToArray());
+                            break;
+                        case Book paper:
+                            SavePaper(paper, levels);
+                            break;
+                    }
+                }
+            }
+
+            void SavePaper(Book paper, string[] levels)
+            {
+                newList.Add(new YamlEntity(paper.Key, string.Join(".", levels), paper.Title, new[] { "" }, string.Empty));
+            }
         }
 
         static void GenerateMarkdownList(Library lib)
@@ -208,5 +277,10 @@ namespace Zotero.Test.NetCore
         }
 
         public record CopyInstructor(string Source, string Target);
+    }
+
+    public record YamlEntity(string Key, string Collection, string Title, string[] Highlights, string Notes)
+    {
+        public YamlEntity() : this("", "", "", new string[] { }, "") { }
     }
 }
