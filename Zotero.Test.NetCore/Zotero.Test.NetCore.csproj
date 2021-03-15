@@ -6,11 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="app.js" />
     <None Remove="github-markdown.css" />
     <None Remove="main.css" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="app.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="main.css">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

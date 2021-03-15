@@ -156,7 +156,7 @@ namespace Zotero.Test.NetCore
                 File.Copy(filename, file, true);
             }
 
-            foreach (var item in new[] { "github-markdown.css", "main.css" })
+            foreach (var item in new[] { "github-markdown.css", "main.css", "app.js" })
             {
                 MakeSureFile(item);
             }
