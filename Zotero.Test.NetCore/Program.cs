@@ -205,12 +205,17 @@ namespace Zotero.Test.NetCore
                 sb.AppendLine();
                 sb.AppendLine($"<blockquote> {string.Join(", ", paper.Creators.Select(_ => $"{_.FirstName} {_.LastName}"))}" +
                     $" ({string.Join(", ", new[] { paper.Publisher, paper.Date, paper.Type }.Where(_ => !string.IsNullOrWhiteSpace(_)))})" +
-                    (paper.URL == null ? "" : $" <a href=\"{paper.URL}\">URL</a>)") +
+                    (paper.URL == null ? "" : $" <a href=\"{paper.URL}\">URL</a>") +
                     (paper.Attachments.Count == 0 ? "" : $" 📄") +
                     $"</blockquote>");
                 sb.AppendLine();
                 sb.AppendLine($"<p>Abstract: {AbstractStyler.StyleAbstract(paper.AbstractNote, note.Highlights)}</p>");
                 sb.AppendLine();
+                if (!string.IsNullOrWhiteSpace(note.Notes))
+                {
+                    sb.AppendLine($"<blockquote> {note.Notes} </blockquote>");
+                    sb.AppendLine();
+                }
             }
         }
 
